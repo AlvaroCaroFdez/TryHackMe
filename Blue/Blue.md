@@ -169,4 +169,4 @@ Esta flag la podremos encontrar en el directorio `C:\Users\Jon\Documents`:
 
 ---
 
-Una vez encontradas todas las Flags, podemos confirmar que la máquina ha sido comprometida con ¡ÉXITO!
+### Una vez encontradas todas las Flags, podemos confirmar que la máquina ha sido comprometida con ¡ÉXITO!
