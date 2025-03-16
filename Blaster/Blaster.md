@@ -135,4 +135,6 @@ Hemos comprometido exitosamente la máquina Blaster siguiendo estos pasos:
 - **user.txt**: Primera flag encontrada en el escritorio del usuario Wade.
 - **root.txt**: Segunda flag ubicada en el escritorio del administrador.
 
-¡Máquina completada con éxito! 🎉
+---
+
+### ¡Máquina completada con éxito! 🎉

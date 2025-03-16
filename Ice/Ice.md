@@ -153,4 +153,4 @@ Para terminar vamos a usar una serie de comandos que son muy útiles para la **P
 
 ---
 
-### Podemos confirmar que la máquina ha sido comprometida con **¡ÉXITO!**
+### ¡Máquina completada con éxito! 🎉
